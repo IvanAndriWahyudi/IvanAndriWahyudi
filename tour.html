@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <!--projecttitle-->
+    <title>Tur Virtual Masjid Jami' Al-Ihsan</title>
+    <!--projecttitle-end-->
+    <!--projectdescription-->
+    <meta
+      name="description"
+      content="Tur Virtual Interaktif Masjid Jami' Al-Ihsan"
+    />
+    <!--projectdescription-end-->
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="initial-scale=1, maximum-scale=1, user-scalable=no, width=device-width, shrink-to-fit=no"
+    />
+
+    <!-- Menggunakan Font Awesome dari CDN untuk ikon UI -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Insert this line above script imports  -->
+    <script>
+      if (typeof module === "object") {
+        window.module = module;
+        module = undefined;
+      }
+    </script>
+
+    <!-- Insert this line after script imports -->
+    <script>
+      if (window.module) module = window.module;
+    </script>
+
+    <style>
+      /* SCROLLBAR STYLING */
+      ::-webkit-scrollbar {
+        width: 0.25em;
+        height: 0.25em;
+      }
+      ::-webkit-scrollbar-track {
+        background: #2c3643;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #0d9e59;
+        transition: background 0.5s;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #00e075;
+      }
+
+      body {
+        margin: 0;
+        overflow: hidden;
+        font-family: "Poppins", sans-serif;
+        background-color: #000;
+      }
+      #container {
+        width: 100vw;
+        height: 100vh;
+        display: block;
+        cursor: grab;
+      }
+      #container:active {
+        cursor: grabbing;
+      }
+
+      /* --- PENINGKATAN: Overlay Loading yang Lebih Baik --- */
+      #loading-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background-color: rgba(0, 0, 0, 0.7);
+        color: white;
+        font-size: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 100;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.4s ease;
+      }
+      #loading-overlay.visible {
+        opacity: 1;
+        pointer-events: auto;
+      }
+      .spinner {
+        border: 4px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        border-top: 4px solid #fff;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+        margin-bottom: 20px;
+      }
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* --- PENINGKATAN: Modal Informasi --- */
+      #info-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(8px);
+        z-index: 101;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s ease-in-out;
+      }
+      #info-modal.visible {
+        opacity: 1;
+        pointer-events: auto;
+      }
+      .info-modal-content {
+        background-color: #2c3643;
+        color: #fff;
+        padding: 30px;
+        border-radius: 12px;
+        max-width: 500px;
+        width: 90%;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        text-align: left;
+        position: relative;
+        transform: scale(0.95);
+        transition: transform 0.3s ease-in-out;
+      }
+      #info-modal.visible .info-modal-content {
+        transform: scale(1);
+      }
+      .info-modal-content h2 {
+        margin-top: 0;
+        color: #00e075;
+        font-weight: 600;
+      }
+      .info-modal-content p {
+        line-height: 1.6;
+      }
+      .info-modal-close {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        font-size: 1.8rem;
+        color: #fff;
+        cursor: pointer;
+        transition: transform 0.2s;
+      }
+      .info-modal-close:hover {
+        transform: scale(1.1);
+      }
+
+      /* --- PENINGKATAN: UI Kontrol Tur --- */
+      #tour-ui {
+        position: absolute;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 50;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 15px;
+        pointer-events: none;
+      }
+
+      #scene-title {
+        background-color: rgba(0, 0, 0, 0.6);
+        padding: 8px 20px;
+        border-radius: 20px;
+        font-size: 1rem;
+        color: #fff;
+        opacity: 0;
+        transition: opacity 0.5s ease;
+        transform: translateY(10px);
+      }
+
+      #scene-title.visible {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      #controls-ui {
+        display: flex;
+        gap: 10px;
+        background-color: rgba(44, 54, 67, 0.7);
+        padding: 8px;
+        border-radius: 25px;
+        pointer-events: auto;
+        backdrop-filter: blur(5px);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      }
+
+      .ui-btn {
+        background: transparent;
+        border: none;
+        color: #fff;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        font-size: 1rem;
+        cursor: pointer;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        transition: background-color 0.2s, transform 0.2s;
+      }
+
+      .ui-btn:hover {
+        background-color: rgba(255, 255, 255, 0.2);
+        transform: scale(1.1);
+      }
+    </style>
+  </head>
+  <body id="body">
+    <div id="container"></div>
+
+    <!-- PENINGKATAN: Overlay Loading Baru -->
+    <div id="loading-overlay">
+      <div class="spinner"></div>
+      <div id="loading-text">Memuat...</div>
+    </div>
+
+    <!-- PENINGKATAN: Modal Informasi Baru -->
+    <div id="info-modal" onclick="hideInfoModal()">
+      <div class="info-modal-content" onclick="event.stopPropagation()">
+        <div class="info-modal-close" onclick="hideInfoModal()">&times;</div>
+        <h2 id="info-modal-title"></h2>
+        <p id="info-modal-description"></p>
+      </div>
+    </div>
+
+    <!-- PENINGKATAN: Elemen UI Baru -->
+    <div id="tour-ui">
+      <div id="scene-title"></div>
+      <div id="controls-ui">
+        <button id="zoom-in-btn" class="ui-btn" title="Perbesar">
+          <i class="fa fa-plus"></i>
+        </button>
+        <button id="zoom-out-btn" class="ui-btn" title="Perkecil">
+          <i class="fa fa-minus"></i>
+        </button>
+        <button id="fullscreen-btn" class="ui-btn" title="Layar Penuh">
+          <i class="fa fa-expand"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- PEMBARUAN: Menggunakan pustaka dari CDN untuk memastikan file dimuat -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+    <script>
+      let scene, camera, renderer, controls, clock;
+      let spriteHotspots = [];
+      let panoramaMesh;
+      let targetFov = 75;
+      let autoRotate = true;
+      let autoRotateTimeout;
+
+      const loadingOverlay = document.getElementById("loading-overlay");
+      const loadingText = document.getElementById("loading-text");
+      const sceneTitle = document.getElementById("scene-title");
+      const raycaster = new THREE.Raycaster();
+      const mouse = new THREE.Vector2();
+
+      // --- PEMBARUAN: Semua data hotspot dari kode lama telah ditambahkan di sini ---
+      const tourData = {
+        "Depanmasjid.jpeg": {
+          title: "Halaman Depan Masjid",
+          hotspots: [
+            {
+              type: "navigate",
+              image: "images/chevronforward.png",
+              position: new THREE.Vector3(
+                -131.5104465681688,
+                -164.00576040041986,
+                -339.2079974482404
+              ),
+              target: "Tempatwudhudantoiletwanita.jpeg",
+            },
+            {
+              type: "navigate",
+              image: "images/chevronforward.png",
+              position: new THREE.Vector3(
+                310.8207799117349,
+                -201.79069336888068,
+                -148.72225199147292
+              ),
+              target: "Dalammasjid3.jpeg",
+            },
+            {
+              type: "navigate",
+              image: "images/chevronforward.png",
+              position: new THREE.Vector3(
+                189.5309674437528,
+                -134.7604520368639,
+                324.8802044612171
+              ),
+              target: "Jalansamping.jpeg",
+            },
+            {
+              type: "info",
+              image: "images/info.png",
+              position: new THREE.Vector3(10, -50, -400),
+              title: "Pintu Utama Masjid",
+              description:
+                "Ini adalah pintu masuk utama ke area dalam Masjid Jami' Al-Ihsan. Didesain dengan arsitektur modern yang tetap mempertahankan nuansa Islami.",
+            },
+          ],
+        },
+        "Tempatwudhudantoiletwanita.jpeg": {
+          title: "Area Wudhu Wanita",
+          hotspots: [
+            {
+              type: "navigate",
+              image: "images/chevronforward.png",
+              position: new THREE.Vector3(
+                333.8967673400641,
+                -143.7013750974463,
+                164.76887448980278
+              ),
+              target: "Depanmasjid.jpeg",
+            },
+          ],
+        },
+        "Jalansamping.jpeg": {
+          title: "Sisi Samping Masjid",
+          hotspots: [
+            {
+              type: "navigate",
+              image: "images/chevronforward.png",
+              position: new THREE.Vector3(
+                60.53331488526149,
+                -178.0138406524864,
+                352.281068266482
+              ),
+              target: "Depanmasjid.jpeg",
+            },
+            {
+              type: "navigate",
+              image: "images/chevronforward.png",
+              position: new THREE.Vector3(
+                -353.63637070720586,
+                -180.77708625813273,
+                -44.274354535077535
+              ),
+              target: "sampingmasjid.jpeg",
+            },
+          ],
+        },
+        "Dalammasjid2.jpeg": {
+          title: "Ruang Sholat Samping",
+          hotspots: [
+            {
+              type: "navigate",
+              image: "images/chevronforward.png",
+              position: new THREE.Vector3(
+                375.57577086785017,
+                -135.8175897211208,
+                4.084284089858583
+              ),
+              target: "sampingmasjid.jpeg",
+            },
+            {
+              type: "navigate",
+              image: "images/chevronforward.png",
+              position: new THREE.Vector3(
+                -91.62051160912328,
+                -173.83803911741268,
+                -347.4225242881258
+              ),
+              target: "Dalammasjid1.jpeg",
+            },
+            {
+              type: "navigate",
+              image: "images/chevronforward.png",
+              position: new THREE.Vector3(
+                -299.2742156604864,
+                -195.82677307579547,
+                177.77854226684718
+              ),
+              target: "Dalammasjid3.jpeg",
+            },
+          ],
+        },
+        "Dalammasjid1.jpeg": {
+          title: "Ruang Sholat Pria",
+          hotspots: [
+            {
+              type: "navigate",
+              image: "images/chevronforward.png",
+              position: new THREE.Vector3(
+                -50.64107121149323,
+                -159.68273261043433,
+                -362.3698086549706
+              ),
+              target: "Dalammasjid2.jpeg",
+            },
+            {
+              type: "navigate",
+              image: "images/chevronforward.png",
+              position: new THREE.Vector3(
+                313.2166792974886,
+                -236.2946970380698,
+                75.66363879735684
+              ),
+              target: "Dalammasjid3.jpeg",
+            },
+          ],
+        },
+        "Dalammasjid3.jpeg": {
+          title: "Ruang Sholat Wanita",
+          hotspots: [
+            {
+              type: "navigate",
+              image: "images/chevronforward.png",
+              position: new THREE.Vector3(
+                -59.09812131329214,
+                -153.0805503462359,
+                -364.15179129093656
+              ),
+              target: "Dalammasjid2.jpeg",
+            },
+            {
+              type: "navigate",
+              image: "images/chevronforward.png",
+              position: new THREE.Vector3(
+                -356.3191874021938,
+                -179.16269365680063,
+                20.217700157003485
+              ),
+              target: "Dalammasjid1.jpeg",
+            },
+            {
+              type: "navigate",
+              image: "images/chevronforward.png",
+              position: new THREE.Vector3(
+                245.71377066481585,
+                -229.73736062646384,
+                -215.61052468669882
+              ),
+              target: "Depanmasjid.jpeg",
+            },
+          ],
+        },
+        "Tempatwudhudantoiletpria.jpeg": {
+          title: "Area Wudhu Pria",
+          hotspots: [
+            {
+              type: "navigate",
+              image: "images/chevronforward.png",
+              position: new THREE.Vector3(
+                218.91301932979087,
+                -159.04317892107116,
+                293.92587564510825
+              ),
+              target: "sampingmasjid.jpeg",
+            },
+          ],
+        },
+        "sampingmasjid.jpeg": {
+          title: "Area Samping Masjid",
+          hotspots: [
+            {
+              type: "navigate",
+              image: "images/chevronforward.png",
+              position: new THREE.Vector3(
+                -13.428193370493613,
+                -143.0941856043224,
+                -372.34110834232604
+              ),
+              target: "Tempatwudhudantoiletpria.jpeg",
+            },
+            {
+              type: "navigate",
+              image: "images/chevronforward.png",
+              position: new THREE.Vector3(
+                -333.1381905298141,
+                -218.53786266070784,
+                26.162743225786386
+              ),
+              target: "Dalammasjid2.jpeg",
+            },
+            {
+              type: "navigate",
+              image: "images/chevronforward.png",
+              position: new THREE.Vector3(
+                -41.454448165607886,
+                -168.2040963926105,
+                359.8984424019762
+              ),
+              target: "Jalansamping.jpeg",
+            },
+          ],
+        },
+      };
+
+      init();
+      animate();
+
+      function init() {
+        const container = document.getElementById("container");
+        clock = new THREE.Clock();
+
+        scene = new THREE.Scene();
+        camera = new THREE.PerspectiveCamera(
+          targetFov,
+          container.clientWidth / container.clientHeight,
+          0.1,
+          1000
+        );
+        camera.position.set(0, 0, 0.1);
+
+        renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(container.clientWidth, container.clientHeight);
+        container.appendChild(renderer.domElement);
+
+        controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableZoom = false;
+        controls.enablePan = false;
+        controls.rotateSpeed = -0.3;
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.07;
+
+        const geometry = new THREE.SphereGeometry(500, 60, 40);
+        geometry.scale(-1, 1, 1);
+
+        const initialPanorama = "Depanmasjid.jpeg";
+        const texture = new THREE.TextureLoader().load(
+          `panoramas/${initialPanorama}`
+        );
+        const material = new THREE.MeshBasicMaterial({ map: texture });
+        panoramaMesh = new THREE.Mesh(geometry, material);
+        scene.add(panoramaMesh);
+
+        loadHotspotsFor(initialPanorama);
+        updateSceneTitle(initialPanorama);
+
+        // Event Listeners
+        window.addEventListener("resize", onWindowResize);
+        container.addEventListener("wheel", onMouseWheel, { passive: false });
+        container.addEventListener("click", onClick, false);
+        container.addEventListener("pointermove", onPointerMove, false);
+
+        // PENINGKATAN: Event listener untuk kontrol UI dan autorotate
+        document
+          .getElementById("zoom-in-btn")
+          .addEventListener("click", () => zoom(5));
+        document
+          .getElementById("zoom-out-btn")
+          .addEventListener("click", () => zoom(-5));
+        document
+          .getElementById("fullscreen-btn")
+          .addEventListener("click", toggleFullScreen);
+        controls.addEventListener("start", stopAutoRotate);
+        controls.addEventListener("end", startAutoRotate);
+      }
+
+      function switchPanorama(panoramaName) {
+        loadingOverlay.classList.add("visible");
+        clearHotspots();
+
+        const newTexture = new THREE.TextureLoader().load(
+          `panoramas/${panoramaName}`,
+          tex => {
+            let oldMaterial = panoramaMesh.material;
+            let newMaterial = new THREE.MeshBasicMaterial({
+              map: tex,
+              transparent: true,
+              opacity: 0,
+            });
+            panoramaMesh.material = newMaterial;
+
+            let opacity = { value: 0 };
+            let fadeInterval = setInterval(() => {
+              opacity.value += 0.05;
+              newMaterial.opacity = opacity.value;
+              if (opacity.value >= 1) {
+                clearInterval(fadeInterval);
+                newMaterial.transparent = false;
+                oldMaterial.dispose();
+                loadHotspotsFor(panoramaName);
+                updateSceneTitle(panoramaName);
+                loadingOverlay.classList.remove("visible");
+              }
+            }, 20);
+          },
+          xhr => {
+            loadingText.textContent = `Memuat... ${Math.round(
+              (xhr.loaded / xhr.total) * 100
+            )}%`;
+          },
+          () => {
+            loadingText.textContent = `Gagal memuat panorama.`;
+          }
+        );
+      }
+
+      function loadHotspotsFor(panoramaName) {
+        clearHotspots();
+        const data = tourData[panoramaName];
+        if (data && data.hotspots) {
+          data.hotspots.forEach(hotspotData => addHotspot(hotspotData));
+        }
+      }
+
+      function addHotspot(data) {
+        const textureLoader = new THREE.TextureLoader();
+        textureLoader.load(data.image, texture => {
+          const material = new THREE.SpriteMaterial({
+            map: texture,
+            transparent: true,
+            alphaTest: 0.5,
+          });
+          const sprite = new THREE.Sprite(material);
+          sprite.position.copy(data.position);
+          sprite.scale.set(40, 40, 1);
+          sprite.userData = {
+            type: data.type,
+            onClick: () => {
+              if (data.type === "navigate") {
+                switchPanorama(data.target);
+              } else if (data.type === "info") {
+                showInfoModal(data.title, data.description);
+              }
+            },
+            baseScale: 40,
+            hoverScale: 48,
+            isHovered: false,
+          };
+          spriteHotspots.push(sprite);
+          scene.add(sprite);
+        });
+      }
+
+      function updateSceneTitle(panoramaName) {
+        const data = tourData[panoramaName];
+        if (data && data.title) {
+          sceneTitle.textContent = data.title;
+          sceneTitle.classList.add("visible");
+        } else {
+          sceneTitle.classList.remove("visible");
+        }
+      }
+
+      function animate() {
+        requestAnimationFrame(animate);
+        const elapsedTime = clock.getElapsedTime();
+
+        if (autoRotate) {
+          panoramaMesh.rotation.y += 0.0003;
+        }
+
+        spriteHotspots.forEach(sprite => {
+          const pulse = Math.sin(elapsedTime * 2.5) * 2;
+          let targetScale = sprite.userData.isHovered
+            ? sprite.userData.hoverScale
+            : sprite.userData.baseScale + pulse;
+          const newScale = THREE.MathUtils.lerp(
+            sprite.scale.x,
+            targetScale,
+            0.1
+          );
+          sprite.scale.set(newScale, newScale, 1);
+        });
+
+        camera.fov = THREE.MathUtils.lerp(camera.fov, targetFov, 0.1);
+        camera.updateProjectionMatrix();
+
+        controls.update();
+        renderer.render(scene, camera);
+      }
+
+      // --- PENINGKATAN: Fungsi untuk kontrol UI dan autorotate ---
+      function zoom(amount) {
+        targetFov = THREE.MathUtils.clamp(targetFov - amount, 40, 90);
+      }
+
+      function stopAutoRotate() {
+        autoRotate = false;
+        clearTimeout(autoRotateTimeout);
+      }
+
+      function startAutoRotate() {
+        autoRotateTimeout = setTimeout(() => (autoRotate = true), 3000); // Mulai lagi setelah 3 detik
+      }
+
+      function toggleFullScreen() {
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen();
+        } else if (document.exitFullscreen) {
+          document.exitFullscreen();
+        }
+      }
+
+      function showInfoModal(title, description) {
+        document.getElementById("info-modal-title").textContent = title;
+        document.getElementById("info-modal-description").textContent =
+          description;
+        document.getElementById("info-modal").classList.add("visible");
+      }
+
+      function hideInfoModal() {
+        document.getElementById("info-modal").classList.remove("visible");
+      }
+
+      // --- Fungsi pembantu ---
+      function clearHotspots() {
+        spriteHotspots.forEach(sprite => scene.remove(sprite));
+        spriteHotspots = [];
+      }
+      function onWindowResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      }
+      function onMouseWheel(e) {
+        e.preventDefault();
+        zoom(e.deltaY * 0.05);
+      }
+      function onClick(event) {
+        updateMouse(event);
+        raycaster.setFromCamera(mouse, camera);
+        const intersects = raycaster.intersectObjects(spriteHotspots);
+        if (intersects.length > 0) intersects[0].object.userData.onClick();
+      }
+      function onPointerMove(event) {
+        updateMouse(event);
+        raycaster.setFromCamera(mouse, camera);
+        const intersects = raycaster.intersectObjects(spriteHotspots);
+        spriteHotspots.forEach(sprite => (sprite.userData.isHovered = false));
+        document.body.style.cursor = "grab";
+        if (intersects.length > 0) {
+          document.body.style.cursor = "pointer";
+          intersects[0].object.userData.isHovered = true;
+        }
+      }
+      function updateMouse(event) {
+        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+      }
+    </script>
+  </body>
+</html>
