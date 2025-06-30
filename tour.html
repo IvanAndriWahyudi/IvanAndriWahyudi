@@ -532,10 +532,10 @@
         // Event Listeners
         window.addEventListener("resize", onWindowResize);
         container.addEventListener("wheel", onMouseWheel, { passive: false });
-        container.addEventListener("click", onClick, false);
+        // PERBAIKAN: Menggunakan satu fungsi untuk menangani klik dan sentuhan
+        container.addEventListener("click", handleInteraction, false);
+        container.addEventListener("touchend", handleInteraction, false);
         container.addEventListener("pointermove", onPointerMove, false);
-        // PERBAIKAN: Menambahkan event listener untuk sentuhan
-        container.addEventListener("touchend", onTouchEnd, false);
         document
           .getElementById("zoom-in-btn")
           .addEventListener("click", () => zoom(5));
@@ -700,30 +700,40 @@
         zoom(e.deltaY * 0.05);
       }
 
-      function onClick(event) {
-        // PERBAIKAN: Menggunakan fungsi updateMouse yang sudah ada
-        updateMouse(event.clientX, event.clientY);
-        raycaster.setFromCamera(mouse, camera);
-        const intersects = raycaster.intersectObjects(spriteHotspots);
-        if (intersects.length > 0) intersects[0].object.userData.onClick();
-      }
+      // PERBAIKAN: Fungsi tunggal untuk menangani klik dan sentuhan
+      function handleInteraction(event) {
+        let x, y;
 
-      // PERBAIKAN: Fungsi baru untuk menangani sentuhan pada mobile
-      function onTouchEnd(event) {
-        event.preventDefault(); // Mencegah klik ganda
-        // Ambil data sentuhan terakhir
-        const touch = event.changedTouches[0];
-        updateMouse(touch.clientX, touch.clientY);
+        // Cek apakah event ini adalah sentuhan atau klik
+        if (event.type === "touchend") {
+          // Mencegah event 'click' palsu setelah sentuhan
+          event.preventDefault();
+          // Ambil koordinat dari sentuhan terakhir
+          const touch = event.changedTouches[0];
+          x = touch.clientX;
+          y = touch.clientY;
+        } else {
+          // Asumsikan ini adalah event 'click'
+          x = event.clientX;
+          y = event.clientY;
+        }
+
+        // Update posisi mouse/pointer untuk raycaster
+        mouse.x = (x / window.innerWidth) * 2 - 1;
+        mouse.y = -(y / window.innerHeight) * 2 + 1;
+
         raycaster.setFromCamera(mouse, camera);
         const intersects = raycaster.intersectObjects(spriteHotspots);
+
         if (intersects.length > 0) {
+          // Panggil fungsi onClick yang tersimpan di data hotspot
           intersects[0].object.userData.onClick();
         }
       }
 
       function onPointerMove(event) {
-        // PERBAIKAN: Menggunakan fungsi updateMouse yang sudah ada
-        updateMouse(event.clientX, event.clientY);
+        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
         raycaster.setFromCamera(mouse, camera);
         const intersects = raycaster.intersectObjects(spriteHotspots);
         spriteHotspots.forEach(sprite => (sprite.userData.isHovered = false));
@@ -732,12 +742,6 @@
           document.body.style.cursor = "pointer";
           intersects[0].object.userData.isHovered = true;
         }
-      }
-
-      // PERBAIKAN: Fungsi updateMouse dibuat lebih umum
-      function updateMouse(x, y) {
-        mouse.x = (x / window.innerWidth) * 2 - 1;
-        mouse.y = -(y / window.innerHeight) * 2 + 1;
       }
     </script>
   </body>
